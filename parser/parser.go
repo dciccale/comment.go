@@ -16,7 +16,7 @@ type CommentBlock struct {
 
 type Parser struct {
 	root    map[string]interface{}
-	tags    tags.Tags
+	Tags    *tags.Tags
 	tag     interface{}
 	section struct {
 		data map[string]interface{}
@@ -86,19 +86,12 @@ func (p *Parser) ProcessBlock(block CommentBlock) {
 	title := []string{}
 	data := []string{}
 
-	for i := 0; i < 1; i++ {
+	for i := 0; i < len(blocklines); i++ {
 		line = blocklines[i]
 		data = REGEX_ROW_DATA.FindAllStringSubmatch(line, -1)[0]
 
-		// fmt.Println(line)
-		// result_slice := re1.FindAllStringSubmatch(line, -1)
-		// fmt.Printf("%v", result_slice)
-		// fmt.Println(err)
-
-		// fmt.Println(data[0])
 		if i == 0 {
 			firstline = true
-			// fmt.Println(firstline)
 			// p.pointer = p.root
 		}
 
@@ -106,7 +99,7 @@ func (p *Parser) ProcessBlock(block CommentBlock) {
 			symbol = data[1]
 			value = data[2]
 
-			if symbol == p.tags.Get("text") && firstline {
+			if symbol == p.Tags.Get("text") && firstline {
 				firstline = false
 
 				// fmt.Println(value)
@@ -116,7 +109,7 @@ func (p *Parser) ProcessBlock(block CommentBlock) {
 				// for j := 0; j < len(title); j++ {
 				// }
 
-				p.section.data = make(map[string]interface{}, 0)
+				p.section.data = make(map[string]interface{})
 				p.section.data["name"] = value
 				p.section.data["title"] = strings.Replace(value, ".", "-", -1)
 				p.section.data["line"] = block.line
@@ -124,7 +117,8 @@ func (p *Parser) ProcessBlock(block CommentBlock) {
 				p.section.data["srclink"] = path.Base(strings.Replace(path.Base(block.filename), path.Ext(block.filename), "", -1))
 				p.section.data["level"] = len(title) + 1
 			} else {
-				p.tag = p.tags.Get(symbol)
+				p.tag = p.Tags.Get(symbol)
+				fmt.Println("a")
 
 				// Change the mode when not matching the current one
 				// if p.section.mode != tag.name {
@@ -134,7 +128,6 @@ func (p *Parser) ProcessBlock(block CommentBlock) {
 				// Process the value
 				// tag.process(value, p.section);
 
-				fmt.Println(p.tag)
 				// p.section.mode = p.tag.name
 			}
 		}

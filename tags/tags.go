@@ -6,25 +6,26 @@ import (
 
 type Tags struct {
 	name    string
-	tags    map[string]interface{}
-	symbols map[string]interface{}
+	tags    map[string]Tag
+	symbols map[string]string
 }
 
 type Tag struct {
-	name       string
-	symbol     string
-	definition interface{}
+	name   string
+	symbol string
+	// definition interface{}
 }
 
 func (t *Tag) Process(value string, section interface{}) {
 	fmt.Println("process")
 }
 
-func (t *Tags) Define(name string, definition interface{}) Tag {
-	tag := Tag{name: name, definition: definition}
-	t.tags[tag.symbol] = tag
-	t.symbols[name] = tag.symbol
-	return tag
+func (t *Tags) Define(name string, symbol string) {
+	tag := Tag{name: name, symbol: symbol}
+	t.tags = make(map[string]Tag)
+	t.tags[symbol] = tag
+	t.symbols = make(map[string]string)
+	t.symbols[name] = symbol
 }
 
 func (t *Tags) Get(q string) interface{} {

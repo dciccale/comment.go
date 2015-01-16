@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/dciccale/comment.go/parser"
+	"github.com/dciccale/comment.go/tags"
 	"io/ioutil"
 	"strings"
 )
@@ -18,6 +19,8 @@ func main() {
 	check(err)
 
 	var lines = strings.Split(string(data), "\n")
-	p := parser.Parser{}
+	t := tags.Tags{}
+	t.Define("text", "*")
+	p := parser.Parser{Tags: &t}
 	p.Transform(p.Extract(lines, filename))
 }
