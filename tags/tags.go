@@ -1,8 +1,10 @@
 package tags
 
 import (
-	"fmt"
+// "fmt"
 )
+
+type process func(string)
 
 type Tags struct {
 	name    string
@@ -11,21 +13,19 @@ type Tags struct {
 }
 
 type Tag struct {
-	name   string
-	symbol string
+	name    string
+	symbol  string
+	Process process
 	// definition interface{}
 }
 
-func (t *Tag) Process(value string, section interface{}) {
-	fmt.Println("process")
-}
-
-func (t *Tags) Define(name string, symbol string) {
-	tag := Tag{name: name, symbol: symbol}
+func (t *Tags) Define(name string, symbol string, fn process) Tag {
+	tag := Tag{name: name, symbol: symbol, Process: fn}
 	t.tags = make(map[string]Tag)
 	t.tags[symbol] = tag
 	t.symbols = make(map[string]string)
 	t.symbols[name] = symbol
+	return tag
 }
 
 func (t *Tags) Get(q string) interface{} {

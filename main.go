@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"github.com/dciccale/comment.go/parser"
 	"github.com/dciccale/comment.go/tags"
 	"io/ioutil"
@@ -20,7 +21,10 @@ func main() {
 
 	var lines = strings.Split(string(data), "\n")
 	t := tags.Tags{}
-	t.Define("text", "*")
+
+	var tag = t.Define("text", "*", func(msg string) { fmt.Println(msg) })
+	tag.Process("process")
+
 	p := parser.Parser{Tags: &t}
 	p.Transform(p.Extract(lines, filename))
 }

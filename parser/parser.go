@@ -1,12 +1,14 @@
 package parser
 
 import (
-	"fmt"
+	// "fmt"
 	"github.com/dciccale/comment.go/tags"
 	"path"
 	"regexp"
 	"strings"
 )
+
+type dataType map[string]interface{}
 
 type CommentBlock struct {
 	comment  string
@@ -19,10 +21,10 @@ type Parser struct {
 	Tags    *tags.Tags
 	tag     interface{}
 	section struct {
-		data map[string]interface{}
-		// current []string{}
-		// prev []string{}
-		mode string
+		data    dataType
+		current []dataType
+		prev    []dataType
+		mode    string
 	}
 }
 
@@ -53,7 +55,11 @@ func (p *Parser) Extract(lines []string, filename string) map[string][]CommentBl
 			commentlines = append(commentlines[:0], commentlines[1:]...)
 
 			comment = strings.Join(commentlines, "\n")
-			commentmap[filename] = append(commentmap[filename], CommentBlock{comment: comment, line: linenum, filename: filename})
+			commentmap[filename] = append(commentmap[filename], CommentBlock{
+				comment:  comment,
+				line:     linenum,
+				filename: filename,
+			})
 		}
 	}
 	return commentmap
@@ -109,16 +115,23 @@ func (p *Parser) ProcessBlock(block CommentBlock) {
 				// for j := 0; j < len(title); j++ {
 				// }
 
-				p.section.data = make(map[string]interface{})
+				p.section.data = make(dataType, 0)
 				p.section.data["name"] = value
 				p.section.data["title"] = strings.Replace(value, ".", "-", -1)
 				p.section.data["line"] = block.line
 				p.section.data["filename"] = path.Base(block.filename)
 				p.section.data["srclink"] = path.Base(strings.Replace(path.Base(block.filename), path.Ext(block.filename), "", -1))
 				p.section.data["level"] = len(title) + 1
+
+				dataBlock := make([]dataType, 0)
+				dataBlock = append(dataBlock, p.section.data)
+				p.section.current = dataBlock
+				p.section.prev = dataBlock
+
+				// p.section.current = p.section.prev = [p.section.data]
+
 			} else {
 				p.tag = p.Tags.Get(symbol)
-				fmt.Println("a")
 
 				// Change the mode when not matching the current one
 				// if p.section.mode != tag.name {
