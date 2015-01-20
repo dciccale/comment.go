@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/dciccale/comment.go/parser"
 	"github.com/dciccale/comment.go/tags"
+	"github.com/dciccale/comment.go/types"
 	"io/ioutil"
 	"strings"
 )
@@ -22,8 +23,13 @@ func main() {
 	var lines = strings.Split(string(data), "\n")
 	t := tags.Tags{}
 
-	var tag = t.Define("text", "*", func(msg string) { fmt.Println(msg) })
-	tag.Process("process")
+	t.Define("text", "*", func(value string, section types.Section) {
+		fmt.Println(value)
+		// data := make(map[string]types.Data, 0)
+		// data["Text"] = value
+		// section.Current = append(section.Current, data)
+	}, true)
+	// tag.Process("process")
 
 	p := parser.Parser{Tags: &t}
 	p.Transform(p.Extract(lines, filename))

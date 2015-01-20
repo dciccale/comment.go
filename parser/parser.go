@@ -3,12 +3,11 @@ package parser
 import (
 	// "fmt"
 	"github.com/dciccale/comment.go/tags"
+	"github.com/dciccale/comment.go/types"
 	"path"
 	"regexp"
 	"strings"
 )
-
-type dataType map[string]interface{}
 
 type CommentBlock struct {
 	comment  string
@@ -17,16 +16,18 @@ type CommentBlock struct {
 }
 
 type Parser struct {
-	root    map[string]interface{}
-	Tags    *tags.Tags
-	tag     interface{}
-	section struct {
-		data    dataType
-		current []dataType
-		prev    []dataType
-		mode    string
-	}
+	Tags      *tags.Tags
+	root      map[string]interface{}
+	section   types.Section
+	tocData   map[string]types.Data
+	blockData map[string][]types.Data
 }
+
+// func (p *Parser) Parse(filemap map[string]string) types.Docs {
+// 	p.Transform(p.Extract(filemap))
+// 	docs := types.Docs{Name: p.docsName, Sections: p.sections /*, Toc: p.toc*/}
+// 	return docs
+// }
 
 func (p *Parser) Extract(lines []string, filename string) map[string][]CommentBlock {
 
@@ -82,67 +83,77 @@ func (p *Parser) Transform(commentmap map[string][]CommentBlock) {
 func (p *Parser) generateTOC() {}
 
 func (p *Parser) ProcessBlock(block CommentBlock) {
-	var REGEX_ROW_DATA = regexp.MustCompile("^\\s*(\\S)(?:[^\n])\\s*(.*)$")
 	blocklines := strings.Split(block.comment, "\n")
 
+	var REGEX_ROW_DATA = regexp.MustCompile("^\\s*(\\S)(?:[^\n])\\s*(.*)$")
 	var firstline = false
-	line := ""
-	symbol := ""
-	value := ""
+	var tag tags.Tag
+	var line string
+	var symbol string
+	var value string
 	title := []string{}
+	match := [][]string{}
 	data := []string{}
 
 	for i := 0; i < len(blocklines); i++ {
 		line = blocklines[i]
-		data = REGEX_ROW_DATA.FindAllStringSubmatch(line, -1)[0]
+		match = REGEX_ROW_DATA.FindAllStringSubmatch(line, -1)
 
-		if i == 0 {
-			firstline = true
-			// p.pointer = p.root
-		}
+		if len(match) > 0 {
+			data = match[0]
+			if i == 0 {
+				firstline = true
+				// p.pointer = p.root
+			}
 
-		if len(data) > 0 {
-			symbol = data[1]
-			value = data[2]
+			if len(data) >= 0 {
+				symbol = data[1]
+				value = data[2]
 
-			if symbol == p.Tags.Get("text") && firstline {
-				firstline = false
+				if symbol == p.Tags.GetSymbol("text") && firstline {
+					firstline = false
 
-				// fmt.Println(value)
-				title = strings.Split(value, ".")
-				// fmt.Println(strings.Split(value, "\\."))
-				// fmt.Println(strings.Join(value, ""))
-				// for j := 0; j < len(title); j++ {
-				// }
+					title = strings.Split(value, ".")
+					// for j := 0; j < len(title); j++ {
+					// 	p.pointer = p.pointer[title[j]] = p.pointer[title[j]] || {};
+					// }
 
-				p.section.data = make(dataType, 0)
-				p.section.data["name"] = value
-				p.section.data["title"] = strings.Replace(value, ".", "-", -1)
-				p.section.data["line"] = block.line
-				p.section.data["filename"] = path.Base(block.filename)
-				p.section.data["srclink"] = path.Base(strings.Replace(path.Base(block.filename), path.Ext(block.filename), "", -1))
-				p.section.data["level"] = len(title) + 1
+					p.section.Data.Name = value
+					p.section.Data.Title = strings.Replace(value, ".", "-", -1)
+					p.section.Data.Line = block.line
+					p.section.Data.Filename = path.Base(block.filename)
+					p.section.Data.Srclink = path.Base(strings.Replace(path.Base(block.filename), path.Ext(block.filename), "", -1))
+					p.section.Data.Level = len(title) + 1
 
-				dataBlock := make([]dataType, 0)
-				dataBlock = append(dataBlock, p.section.data)
-				p.section.current = dataBlock
-				p.section.prev = dataBlock
+					dataBlock := make([]types.Data, 0)
+					dataBlock = append(dataBlock, p.section.Data)
+					p.section.Current = dataBlock
+					p.section.Prev = dataBlock
 
-				// p.section.current = p.section.prev = [p.section.data]
+				} else if p.Tags.Exist(symbol) {
+					tag = p.Tags.Get(symbol)
 
-			} else {
-				p.tag = p.Tags.Get(symbol)
+					// Change the mode when not matching the current one
+					if p.section.Mode != tag.Name {
+						p.section.Current = p.section.Prev
+					}
 
-				// Change the mode when not matching the current one
-				// if p.section.mode != tag.name {
-				// 	p.section.current = p.section.prev
-				// }
+					// Process the value
+					// tag.Process(value, p.section)
 
-				// Process the value
-				// tag.process(value, p.section);
-
-				// p.section.mode = p.tag.name
+					p.section.Mode = tag.Name
+				}
 			}
 		}
 	}
+
+	// Map the section data by name to generate the toc later
+	tocData := make(map[string]types.Data, 0)
+	tocData[p.section.Data.Name] = p.section.Data
+	p.tocData = tocData
+
+	// Map each section by name to be able to order it later according the toc
+	blockData := make(map[string][]types.Data, 0)
+	blockData[p.section.Data.Name] = p.section.Prev
+	p.blockData = blockData
 }
