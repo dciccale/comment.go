@@ -19,7 +19,7 @@ func check(e error) {
 }
 
 func main() {
-	filename := "kimbo.js"
+	filename := "kimbo.js" // demo file from http://kimbojs.com/dist/kimbo.js
 	data, err := ioutil.ReadFile(filename)
 	check(err)
 
