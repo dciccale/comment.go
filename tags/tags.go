@@ -1,11 +1,11 @@
 package tags
 
-import (
-	// "fmt"
-	"github.com/dciccale/comment.go/types"
-)
+import
+// "fmt"
 
-type process func(string, types.Section)
+"github.com/dciccale/comment.go/types"
+
+type process func(string, *types.Section)
 
 type Tags struct {
 	tags    map[string]Tag
@@ -19,11 +19,13 @@ type Tag struct {
 	IsSingle bool
 }
 
+func NewTags() *Tags {
+	return &Tags{tags: make(map[string]Tag), symbols: make(map[string]string)}
+}
+
 func (t *Tags) Define(name string, symbol string, fn process, isSingle bool) Tag {
 	tag := Tag{Name: name, Symbol: symbol, Process: fn, IsSingle: isSingle}
-	t.tags = make(map[string]Tag)
 	t.tags[symbol] = tag
-	t.symbols = make(map[string]string)
 	t.symbols[name] = symbol
 	return tag
 }
